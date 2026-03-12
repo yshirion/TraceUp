@@ -262,7 +262,8 @@ function processTransactions(scrapeResult, companyId) {
                 originalAmount,
                 memo,
                 isNonILS,
-                isInstallments
+                isInstallments,
+                companyType: banks.includes(companyId) ? 'bank' : 'creditCard'
             });
         });
     });

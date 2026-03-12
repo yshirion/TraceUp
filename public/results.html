@@ -258,6 +258,15 @@
             </div>
 
             <div class="filter-group" style="display:flex; flex-direction:column; gap:4px;">
+                <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Company Type</label>
+                <select id="filterCompanyType" onchange="applyFilters()" style="padding:8px 10px; border-radius:6px; border:1px solid var(--border-color); background:rgba(0,0,0,0.2); color:var(--text-primary); font-family:inherit;">
+                    <option value="all">All Types</option>
+                    <option value="bank">🏦 Banks Only</option>
+                    <option value="creditCard">💳 Credit Cards Only</option>
+                </select>
+            </div>
+
+            <div class="filter-group" style="display:flex; flex-direction:column; gap:4px;">
                 <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Company</label>
                 <select id="filterCompany" onchange="applyFilters()" style="padding:8px 10px; border-radius:6px; border:1px solid var(--border-color); background:rgba(0,0,0,0.2); color:var(--text-primary); font-family:inherit;">
                     <option value="all">All Companies</option>

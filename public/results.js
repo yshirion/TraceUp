@@ -140,6 +140,7 @@ function syncAmountInputs(fromRaw) {
 }
 
 function resetFilters() {
+    document.getElementById('filterCompanyType').value = 'all';
     document.getElementById('filterCompany').value = 'all';
     document.getElementById('filterAccount').value = 'all';
     document.getElementById('filterCurrency').value = 'all';
@@ -152,6 +153,7 @@ function resetFilters() {
 
 function applyFilters() {
     const dateStr = document.getElementById('filterFromDate').value;
+    const companyType = document.getElementById('filterCompanyType').value;
     const company = document.getElementById('filterCompany').value;
     const account = document.getElementById('filterAccount').value;
     const currency = document.getElementById('filterCurrency').value;
@@ -168,10 +170,13 @@ function applyFilters() {
         // 1. Date filter
         if (userChoiceDate && parseDate(t.date) < userChoiceDate) return false;
 
-        // 2. Company filter
+        // 2. Company Type filter
+        if (companyType !== 'all' && t.companyType !== companyType) return false;
+
+        // 3. Company filter
         if (company !== 'all' && t.company !== company) return false;
 
-        // 3. Account filter
+        // 4. Account filter
         if (account !== 'all' && t.account !== account) return false;
 
         // 4. Currency filter

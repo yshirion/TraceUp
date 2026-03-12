@@ -229,23 +229,20 @@
         </div>
     </div>
 
-    <div class="sort-bar">
-        <span class="sort-label">Sort by:</span>
-        <button class="sort-btn active" id="sortDate" onclick="sortBy('date')">
-            Date <span class="sort-arrow" id="arrowDate">▼</span>
-        </button>
-        <button class="sort-btn" id="sortCompany" onclick="sortBy('company')">
-            Company <span class="sort-arrow" id="arrowCompany">▼</span>
-        </button>
-        <button class="sort-btn" id="sortAmount" onclick="sortBy('amount')">
-            Amount <span class="sort-arrow" id="arrowAmount">▼</span>
-        </button>
-    </div>
-
-    <div id="loadOlderContainer" style="display:none; text-align:center; margin-bottom:16px;">
-        <button class="btn-back" onclick="loadOlder()" style="background:rgba(16, 185, 129, 0.1); border-color:rgba(16, 185, 129, 0.3); color:var(--success);">
-            Load <span id="olderCount"></span> Older Transactions
-        </button>
+    <div class="results-controls" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+        <div class="filter-group" style="display:flex; align-items:center; gap:8px;">
+            <span class="sort-label">From:</span>
+            <input type="date" id="filterFromDate" onchange="applyDateFilter()" style="padding:6px 10px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-card); color:var(--text-primary); font-family:inherit;">
+        </div>
+        <div class="sort-bar" style="margin-bottom:0;">
+            <span class="sort-label">Sort by:</span>
+            <button class="sort-btn active" id="sortDate" onclick="sortBy('date')">
+                Date <span class="sort-arrow" id="arrowDate">▼</span>
+            </button>
+            <button class="sort-btn" id="sortCompany" onclick="sortBy('company')">
+                Company <span class="sort-arrow" id="arrowCompany">▼</span>
+            </button>
+        </div>
     </div>
 
     <div class="table-container">
@@ -269,132 +266,8 @@
         </div>
     </div>
 
-    <script>
-        let allTransactions = [];        // The full 3 months from the server
-        let visibleTransactions = [];    // What we currently display (filtered or all)
-        let currentSort = 'date';
-        let sortAsc = false; // newest first by default
-
-        // Parse dd/mm/yyyy to Date for comparison
-        function parseDate(str) {
-            const [dd, mm, yyyy] = str.split('/');
-            return new Date(+yyyy, +mm - 1, +dd);
-        }
-
-        function init() {
-            const data = sessionStorage.getItem('scrapeResults');
-            if (!data) {
-                document.getElementById('tableBody').innerHTML =
-                    '<tr><td colspan="8" class="no-data">No data — please run a scrape first</td></tr>';
-                return;
-            }
-
-            const parsed = JSON.parse(data);
-            allTransactions = parsed.transactions;
-
-            // Initially filter by the startDate the user picked in the dashboard
-            const startDateStr = sessionStorage.getItem('scrapeStartDate');
-            if (startDateStr) {
-                const userChoiceDate = new Date(startDateStr);
-                userChoiceDate.setHours(0, 0, 0, 0);
-                
-                visibleTransactions = allTransactions.filter(t => {
-                    return parseDate(t.date) >= userChoiceDate;
-                });
-            } else {
-                visibleTransactions = [...allTransactions];
-            }
-
-            updateBadgesAndSort();
-        }
-
-        function loadOlder() {
-            // Show everything (up to 3 months)
-            visibleTransactions = [...allTransactions];
-            updateBadgesAndSort();
-            // Hide the button since everything is shown
-            document.getElementById('loadOlderContainer').style.display = 'none';
-        }
-
-        function updateBadgesAndSort() {
-            document.getElementById('countBadge').textContent = `${visibleTransactions.length} transactions`;
-            
-            // Show/hide "Load Older" button if we have hidden transactions
-            const hiddenCount = allTransactions.length - visibleTransactions.length;
-            const container = document.getElementById('loadOlderContainer');
-            if (container) {
-                if (hiddenCount > 0) {
-                    container.style.display = 'block';
-                    document.getElementById('olderCount').textContent = hiddenCount;
-                } else {
-                    container.style.display = 'none';
-                }
-            }
-
-            sortBy(currentSort, true); // re-apply sort
-        }
-
-        function sortBy(field, keepDirection = false) {
-            // Toggle direction if clicking same sort button
-            if (!keepDirection && currentSort === field) {
-                sortAsc = !sortAsc;
-            } else if (!keepDirection) {
-                currentSort = field;
-                // Default directions: date newest first, company A-Z, amount highest first
-                sortAsc = field === 'company';
-            }
-
-            // Update button states
-            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('sort' + field.charAt(0).toUpperCase() + field.slice(1)).classList.add('active');
-
-            // Update arrows
-            document.getElementById('arrowDate').textContent = currentSort === 'date' ? (sortAsc ? '▲' : '▼') : '▼';
-            document.getElementById('arrowCompany').textContent = currentSort === 'company' ? (sortAsc ? '▲' : '▼') : '▼';
-            document.getElementById('arrowAmount').textContent = currentSort === 'amount' ? (sortAsc ? '▲' : '▼') : '▼';
-
-            // Sort visible transactions
-            const sorted = [...visibleTransactions].sort((a, b) => {
-                let cmp = 0;
-                if (field === 'date') {
-                    cmp = parseDate(a.date) - parseDate(b.date);
-                } else if (field === 'company') {
-                    cmp = a.company.localeCompare(b.company);
-                    if (cmp === 0) cmp = parseDate(a.date) - parseDate(b.date); // secondary sort by date
-                } else if (field === 'amount') {
-                    cmp = a.chargedAmount - b.chargedAmount;
-                }
-                return sortAsc ? cmp : -cmp;
-            });
-
-            renderTable(sorted);
-        }
-
-        function renderTable(transactions) {
-            const tbody = document.getElementById('tableBody');
-
-            if (transactions.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="no-data">No transactions found for the selected date range.</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = transactions.map((t, i) => {
-                const amountClass = t.chargedAmount >= 0 ? 'amount-positive' : 'amount-negative';
-                return `<tr>
-                <td class="text-muted">${i + 1}</td>
-                <td><span class="company-badge">${t.company}</span></td>
-                <td>${t.account}</td>
-                <td>${t.date}</td>
-                <td class="${amountClass}">${t.chargedAmount.toFixed(2)}</td>
-                <td>${t.description}</td>
-                <td>${t.originalAmount || '<span class="text-muted">—</span>'}</td>
-                <td>${t.memo || '<span class="text-muted">—</span>'}</td>
-            </tr>`;
-            }).join('');
-        }
-
-        init();
-    </script>    <script src="inactivity.js"></script>
+    <script src="results.js"></script>
+    <script src="inactivity.js"></script>
 </body>
 
 </html>

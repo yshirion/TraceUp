@@ -51,8 +51,7 @@ async function loadCompanies() {
         return;
     }
 
-    list.innerHTML = keys.map(id => {
-        const c = companies[id];
+    const renderItem = (id, c) => {
         const date = c.addedAt ? new Date(c.addedAt).toLocaleDateString() : '';
         return `<li class="company-item">
             <div>
@@ -61,7 +60,22 @@ async function loadCompanies() {
             </div>
             <button class="btn-remove" onclick="removeCompany('${id}')" title="Remove">✕</button>
         </li>`;
-    }).join('');
+    };
+
+    const banks = keys.filter(k => companies[k].type === 'bank');
+    const ccs = keys.filter(k => companies[k].type === 'creditCard');
+
+    let html = '';
+    if (banks.length > 0) {
+        html += `<li class="company-group-title">🏦 Banks</li>`;
+        html += banks.map(id => renderItem(id, companies[id])).join('');
+    }
+    if (ccs.length > 0) {
+        html += `<li class="company-group-title">💳 Credit Cards</li>`;
+        html += ccs.map(id => renderItem(id, companies[id])).join('');
+    }
+
+    list.innerHTML = html;
 }
 
 async function removeCompany(id) {
@@ -75,9 +89,24 @@ function openAddModal() {
     document.getElementById('addModal').classList.add('active');
     const select = document.getElementById('newCompanySelect');
     select.innerHTML = '<option value="">-- Select a company --</option>';
+    
+    const banksGroup = document.createElement('optgroup');
+    banksGroup.label = 'Banks';
+    const ccGroup = document.createElement('optgroup');
+    ccGroup.label = 'Credit Cards';
+
     for (const [key, info] of Object.entries(scrapersData)) {
-        select.innerHTML += `<option value="${key}">${info.name}</option>`;
+        const option = `<option value="${key}">${info.name}</option>`;
+        if (info.type === 'bank') {
+            banksGroup.innerHTML += option;
+        } else {
+            ccGroup.innerHTML += option;
+        }
     }
+
+    if (banksGroup.children.length > 0) select.appendChild(banksGroup);
+    if (ccGroup.children.length > 0) select.appendChild(ccGroup);
+
     document.getElementById('newLoginFields').innerHTML = '';
     setAddStatus(null);
 }

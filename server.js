@@ -170,11 +170,17 @@ app.get('/api/companies', requireAuth, (req, res) => {
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     // Return company IDs and names, never credentials
+    const banks = [
+        'hapoalim', 'beinleumi', 'union', 'otsarHahayal', 'discount', 
+        'mercantile', 'mizrahi', 'leumi', 'massad', 'yahav', 'oneZero', 'pagi'
+    ];
+    
     const companies = {};
     for (const [companyId, info] of Object.entries(user.companies || {})) {
         const scraperInfo = SCRAPERS[companyId];
         companies[companyId] = {
             name: scraperInfo?.name || companyId,
+            type: banks.includes(companyId) ? 'bank' : 'creditCard',
             addedAt: info.addedAt
         };
     }
@@ -239,7 +245,7 @@ function processTransactions(scrapeResult, companyId) {
 
             const chargedAmount = txn.chargedAmount * -1;
             const originalAmountRaw = (isInstallments || isNonILS) ? (txn.originalAmount ? txn.originalAmount * -1 : chargedAmount) : '';
-            
+
             let originalAmount = '';
             if (originalAmountRaw !== '') {
                 originalAmount = isNonILS ? `${originalAmountRaw} ${txn.originalCurrency}` : originalAmountRaw;

@@ -98,3 +98,18 @@ This file documents all changes made to the application. It is appended to seque
 **Where in code:**
 - `server.js` (Added `isInstallments` to the array exported to the client).
 - `public/results.js` (Updated Installments filter `if` statements with backwards compatibility).
+
+---
+
+### Grouping Companies into Banks vs Credit Cards (2026-03-12)
+**What was done:**
+- Updated backend API configurations to explicitly flag each financial institution as either a "bank" or a "creditCard" based on whether it is a formalized banking institution.
+- Updated the Dashboard's "Add Connection" dropdown to separate Banks and Credit Cards visually using `<optgroup>`.
+- Updated the Dashboard's "My Companies" list view to separate the saved connections under "Banks" and "Credit Cards" headers.
+- Updated the Results page "Company" filter dropdown to also separate the available scraped companies using `<optgroup>`.
+
+**Where in code:**
+- `server.js` (Added `type` string to `/api/scrapers` and `/api/companies` endpoint responses).
+- `public/index.js` (Updated `openAddModal()` and `loadCompanies()` to group elements using the semantic `type`).
+- `public/index.html` (Added `.company-group-title` CSS to visually differentiate list headers).
+- `public/results.js` (Updated `populateDropdowns()` to divide the scraped companies using `<optgroup>`).

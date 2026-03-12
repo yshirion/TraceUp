@@ -62,9 +62,28 @@ function populateDropdowns() {
     });
 
     const companySel = document.getElementById('filterCompany');
+    
+    const banksList = [
+        'hapoalim', 'beinleumi', 'union', 'otsarHahayal', 'discount', 
+        'mercantile', 'mizrahi', 'leumi', 'massad', 'yahav', 'oneZero', 'pagi'
+    ];
+    
+    const banksGroup = document.createElement('optgroup');
+    banksGroup.label = 'Banks';
+    const ccGroup = document.createElement('optgroup');
+    ccGroup.label = 'Credit Cards';
+
     Array.from(companies).sort().forEach(c => {
-        companySel.innerHTML += `<option value="${c}">${c}</option>`;
+        const option = `<option value="${c}">${c}</option>`;
+        if (banksList.includes(c)) {
+            banksGroup.innerHTML += option;
+        } else {
+            ccGroup.innerHTML += option;
+        }
     });
+
+    if (banksGroup.children.length > 0) companySel.appendChild(banksGroup);
+    if (ccGroup.children.length > 0) companySel.appendChild(ccGroup);
 
     const accountSel = document.getElementById('filterAccount');
     Array.from(accounts).sort().forEach(a => {

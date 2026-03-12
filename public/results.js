@@ -159,7 +159,7 @@ function applyFilters() {
         let isForeign = t.isNonILS;
         if (isForeign === undefined) {
             // Fallback for older cached scrapes that don't have isNonILS yet
-            isForeign = !!t.originalCurrency && t.originalCurrency !== 'ILS' && t.originalCurrency !== '₪';
+            isForeign = t.originalAmount ? /[a-zA-Z$€£]/.test(String(t.originalAmount)) : false;
         }
 
         if (currency === 'ils' && isForeign) return false;

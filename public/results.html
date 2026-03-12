@@ -267,10 +267,13 @@
             </div>
 
             <div class="filter-group" style="display:flex; flex-direction:column; gap:4px;">
-                <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Company</label>
-                <select id="filterCompany" onchange="applyFilters()" style="padding:8px 10px; border-radius:6px; border:1px solid var(--border-color); background:rgba(0,0,0,0.2); color:var(--text-primary); font-family:inherit;">
-                    <option value="all">All Companies</option>
-                </select>
+                <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">
+                    Company
+                    <span onclick="toggleAllCompanies()" style="float:right; font-weight:400; cursor:pointer; text-transform:none; text-decoration:underline; font-size:0.7rem;">Toggle All</span>
+                </label>
+                <div id="filterCompanyList" style="max-height:120px; overflow-y:auto; padding:6px; border-radius:6px; border:1px solid var(--border-color); background:rgba(0,0,0,0.2); display:flex; flex-direction:column; gap:4px;">
+                    <!-- Populated dynamically by results.js -->
+                </div>
             </div>
 
             <div class="filter-group" style="display:flex; flex-direction:column; gap:4px;">

@@ -45,15 +45,19 @@ async function loadCompanies() {
 
     const keys = Object.keys(companies);
     if (keys.length === 0) {
+        // remove all except #emptyCompanies, then show it
         list.innerHTML = '';
         list.appendChild(empty);
         empty.style.display = '';
         return;
     }
 
+    // Hide the empty placeholder
+    empty.style.display = 'none';
+
     const renderItem = (id, c) => {
         const date = c.addedAt ? new Date(c.addedAt).toLocaleDateString() : '';
-        return `<li class="company-item">
+        return `<li class="company-item" id="company-item-${id}">
             <div>
                 <div class="name">${c.name}</div>
                 <div class="date">Added ${date}</div>
@@ -65,17 +69,19 @@ async function loadCompanies() {
     const banks = keys.filter(k => companies[k].type === 'bank');
     const ccs = keys.filter(k => companies[k].type === 'creditCard');
 
-    let html = '';
+    // Clear everything except the hidden empty element
+    Array.from(list.children).forEach(child => {
+        if (child.id !== 'emptyCompanies') list.removeChild(child);
+    });
+
     if (banks.length > 0) {
-        html += `<li class="company-group-title">🏦 Banks</li>`;
-        html += banks.map(id => renderItem(id, companies[id])).join('');
+        list.innerHTML += `<li class="company-group-title">🏦 Banks</li>`;
+        list.innerHTML += banks.map(id => renderItem(id, companies[id])).join('');
     }
     if (ccs.length > 0) {
-        html += `<li class="company-group-title">💳 Credit Cards</li>`;
-        html += ccs.map(id => renderItem(id, companies[id])).join('');
+        list.innerHTML += `<li class="company-group-title">💳 Credit Cards</li>`;
+        list.innerHTML += ccs.map(id => renderItem(id, companies[id])).join('');
     }
-
-    list.innerHTML = html;
 }
 
 async function removeCompany(id) {

@@ -61,29 +61,39 @@ function populateDropdowns() {
         if (absVal > absMaxAmount) absMaxAmount = absVal;
     });
 
-    const companySel = document.getElementById('filterCompany');
-    
+    const companyListDiv = document.getElementById('filterCompanyList');
+    companyListDiv.innerHTML = '';
+
     const banksList = [
-        'hapoalim', 'beinleumi', 'union', 'otsarHahayal', 'discount', 
+        'hapoalim', 'beinleumi', 'union', 'otsarHahayal', 'discount',
         'mercantile', 'mizrahi', 'leumi', 'massad', 'yahav', 'oneZero', 'pagi'
     ];
-    
-    const banksGroup = document.createElement('optgroup');
-    banksGroup.label = 'Banks';
-    const ccGroup = document.createElement('optgroup');
-    ccGroup.label = 'Credit Cards';
 
-    Array.from(companies).sort().forEach(c => {
-        const option = `<option value="${c}">${c}</option>`;
-        if (banksList.includes(c)) {
-            banksGroup.innerHTML += option;
-        } else {
-            ccGroup.innerHTML += option;
-        }
-    });
+    const bankCompanies = Array.from(companies).filter(c => banksList.includes(c)).sort();
+    const ccCompanies = Array.from(companies).filter(c => !banksList.includes(c)).sort();
 
-    if (banksGroup.children.length > 0) companySel.appendChild(banksGroup);
-    if (ccGroup.children.length > 0) companySel.appendChild(ccGroup);
+    const renderCheckbox = (c) => {
+        const label = document.createElement('label');
+        label.style.cssText = 'display:flex; align-items:center; gap:6px; font-size:0.85rem; cursor:pointer; padding:2px 4px; border-radius:4px;';
+        label.innerHTML = `<input type="checkbox" value="${c}" checked onchange="applyFilters()" style="cursor:pointer;"> ${c}`;
+        return label;
+    };
+
+    if (bankCompanies.length > 0) {
+        const hdr = document.createElement('div');
+        hdr.style.cssText = 'font-size:0.7rem; text-transform:uppercase; color:var(--text-muted); padding:4px 4px 2px; font-weight:600;';
+        hdr.textContent = '🏦 Banks';
+        companyListDiv.appendChild(hdr);
+        bankCompanies.forEach(c => companyListDiv.appendChild(renderCheckbox(c)));
+    }
+
+    if (ccCompanies.length > 0) {
+        const hdr = document.createElement('div');
+        hdr.style.cssText = 'font-size:0.7rem; text-transform:uppercase; color:var(--text-muted); padding:6px 4px 2px; font-weight:600;';
+        hdr.textContent = '💳 Credit Cards';
+        companyListDiv.appendChild(hdr);
+        ccCompanies.forEach(c => companyListDiv.appendChild(renderCheckbox(c)));
+    }
 
     const accountSel = document.getElementById('filterAccount');
     Array.from(accounts).sort().forEach(a => {
@@ -139,9 +149,17 @@ function syncAmountInputs(fromRaw) {
     applyFilters();
 }
 
+function toggleAllCompanies() {
+    const boxes = document.querySelectorAll('#filterCompanyList input[type=checkbox]');
+    const anyUnchecked = Array.from(boxes).some(b => !b.checked);
+    boxes.forEach(b => { b.checked = anyUnchecked; });
+    applyFilters();
+}
+
 function resetFilters() {
     document.getElementById('filterCompanyType').value = 'all';
-    document.getElementById('filterCompany').value = 'all';
+    // Re-check all company checkboxes
+    document.querySelectorAll('#filterCompanyList input[type=checkbox]').forEach(b => b.checked = true);
     document.getElementById('filterAccount').value = 'all';
     document.getElementById('filterCurrency').value = 'all';
     document.getElementById('filterInstallments').value = 'all';
@@ -154,7 +172,12 @@ function resetFilters() {
 function applyFilters() {
     const dateStr = document.getElementById('filterFromDate').value;
     const companyType = document.getElementById('filterCompanyType').value;
-    const company = document.getElementById('filterCompany').value;
+    // Collect checked companies into a Set (empty Set = all checked)
+    const checkedBoxes = document.querySelectorAll('#filterCompanyList input[type=checkbox]:checked');
+    const allBoxes = document.querySelectorAll('#filterCompanyList input[type=checkbox]');
+    const selectedCompanies = checkedBoxes.length === allBoxes.length
+        ? null // all selected — no filtering needed
+        : new Set(Array.from(checkedBoxes).map(b => b.value));
     const account = document.getElementById('filterAccount').value;
     const currency = document.getElementById('filterCurrency').value;
     const installments = document.getElementById('filterInstallments').value;
@@ -171,10 +194,18 @@ function applyFilters() {
         if (userChoiceDate && parseDate(t.date) < userChoiceDate) return false;
 
         // 2. Company Type filter
-        if (companyType !== 'all' && t.companyType !== companyType) return false;
+        if (companyType !== 'all') {
+            // Use backend-sent flag if available; fallback to static banksList for cached data
+            const banksList = [
+                'hapoalim', 'beinleumi', 'union', 'otsarHahayal', 'discount',
+                'mercantile', 'mizrahi', 'leumi', 'massad', 'yahav', 'oneZero', 'pagi'
+            ];
+            const tType = t.companyType || (banksList.includes(t.company) ? 'bank' : 'creditCard');
+            if (tType !== companyType) return false;
+        }
 
-        // 3. Company filter
-        if (company !== 'all' && t.company !== company) return false;
+        // 3. Company filter (multi-select checkboxes)
+        if (selectedCompanies && !selectedCompanies.has(t.company)) return false;
 
         // 4. Account filter
         if (account !== 'all' && t.account !== account) return false;

@@ -268,6 +268,7 @@ function processTransactions(scrapeResult, companyId) {
                 description: txn.description,
                 originalAmount,
                 memo,
+                category: txn.category || '',
                 isNonILS,
                 isInstallments,
                 companyType: banks.includes(companyId) ? 'bank' : 'creditCard'
@@ -343,12 +344,16 @@ app.post('/api/scrape-all', requireAuth, async (req, res) => {
                 companyId,
                 startDate: scrapeStartDate,
                 combineInstallments: false,
-                showBrowser: false
+                showBrowser: false,
+                includeRawTransaction: true
             });
 
             const result = await scraper.scrape(credentials);
 
             if (result.success) {
+                if (companyId === 'leumi' && result.accounts[0]?.txns[0]?.rawTransaction) {
+                    require('fs').writeFileSync('raw-txn.json', JSON.stringify(result.accounts[0].txns[0].rawTransaction, null, 2));
+                }
                 return {
                     companyId,
                     companyName: SCRAPERS[companyId]?.name || companyId,

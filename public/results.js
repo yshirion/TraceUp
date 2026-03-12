@@ -283,7 +283,7 @@ function renderTable(transactions) {
     const tbody = document.getElementById('tableBody');
 
     if (transactions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="no-data">No transactions found for the selected date range.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="no-data">No transactions found for the selected date range.</td></tr>';
         return;
     }
 
@@ -293,6 +293,7 @@ function renderTable(transactions) {
         <td class="text-muted">${i + 1}</td>
         <td><span class="company-badge">${t.company}</span></td>
         <td>${t.account}</td>
+        <td><span class="category-badge" style="font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; background: var(--bg-secondary); border: 1px solid var(--border-color);">${t.category || '<span class="text-muted">—</span>'}</span></td>
         <td>${t.date}</td>
         <td class="${amountClass}">${t.chargedAmount.toFixed(2)}</td>
         <td>${t.description}</td>

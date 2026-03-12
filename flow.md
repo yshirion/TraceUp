@@ -80,8 +80,21 @@ This file documents all changes made to the application. It is appended to seque
 - Fixed a bug where the Currency filter was not working. The frontend originally tried to read the `originalCurrency` field, but the backend was only sending the formatted `originalAmount` string to the UI.
 - Updated the backend scrape function to explicitly send the `isNonILS` variable to the frontend for every transaction.
 - Updated the frontend `results.js` currency filter logic to directly check true/false on the `isNonILS` property.
-- Added a backwards-compatibility fallback in the frontend Javascript so that if `isNonILS` is `undefined` (because the user still has old data stored in their browser cache from before this fix), it safely falls back to manually checking if `originalCurrency` exists and is not ILS, which works for older cached results.
+- Added a backwards-compatibility fallback in the frontend Javascript so that if `isNonILS` is `undefined` (because the user still has old data stored in their browser cache from before this fix), it safely falls back to checking if the formatted `originalAmount` string contains letters or currency symbols (like $).
 
 **Where in code:**
 - `server.js` (Added `isNonILS` to the array exported to the client).
 - `public/results.js` (Updated Currency filter `if` statements with backwards compatibility).
+
+---
+
+### Installments Filter Bug Fix (2026-03-12)
+**What was done:**
+- Identified that the Installments filter was also failing to filter out rows for the same reason: the frontend expected a `t.installments` object, but the backend was never sending it. This caused the "Hide Installments" filter to mistakenly ignore old installments that had values in the `originalAmount` column.
+- Updated the backend scrape function to calculate and send the `isInstallments` flag to the frontend.
+- Updated the frontend `results.js` code to natively filter using the new `isInstallments` flag.
+- Implemented a fallback for cached browser data: if `isInstallments` is missing, check if the row has an `originalAmount` populated, but WITHOUT any currency symbols (such as $). If true, it must be an installment row.
+
+**Where in code:**
+- `server.js` (Added `isInstallments` to the array exported to the client).
+- `public/results.js` (Updated Installments filter `if` statements with backwards compatibility).

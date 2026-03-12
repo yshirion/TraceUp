@@ -166,7 +166,12 @@ function applyFilters() {
         if (currency === 'foreign' && !isForeign) return false;
 
         // 5. Installments filter
-        const isInstallment = t.installments && t.installments.number > 0;
+        let isInstallment = t.isInstallments;
+        if (isInstallment === undefined) {
+             // Fallback for older cached scrapes: Installment has an originalAmount but NO foreign letters/symbols
+             isInstallment = t.originalAmount ? !/[a-zA-Z$€£]/.test(String(t.originalAmount)) : false;
+        }
+
         if (installments === 'only' && !isInstallment) return false;
         if (installments === 'none' && isInstallment) return false;
 

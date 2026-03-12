@@ -255,7 +255,8 @@ function processTransactions(scrapeResult, companyId) {
                 description: txn.description,
                 originalAmount,
                 memo,
-                isNonILS
+                isNonILS,
+                isInstallments
             });
         });
     });

@@ -156,8 +156,8 @@ function applyFilters() {
         if (account !== 'all' && t.account !== account) return false;
 
         // 4. Currency filter
-        if (currency === 'ils' && t.originalCurrency && t.originalCurrency !== 'ILS' && t.originalCurrency !== '₪') return false;
-        if (currency === 'foreign' && (!t.originalCurrency || t.originalCurrency === 'ILS' || t.originalCurrency === '₪')) return false;
+        if (currency === 'ils' && t.isNonILS) return false;
+        if (currency === 'foreign' && !t.isNonILS) return false;
 
         // 5. Installments filter
         const isInstallment = t.installments && t.installments.number > 0;

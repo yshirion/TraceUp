@@ -72,3 +72,15 @@ This file documents all changes made to the application. It is appended to seque
 **Where in code:**
 - `public/results.html` (Complete rewrite of `.results-controls` to include the new grid layout of select fields and sliders).
 - `public/results.js` (Replaced `applyDateFilter` with unified `applyFilters`, added `populateDropdowns` and `syncAmountInputs` logic).
+
+---
+
+### Currency Filter Bug Fix (2026-03-12)
+**What was done:**
+- Fixed a bug where the Currency filter was not working. The frontend originally tried to read the `originalCurrency` field, but the backend was only sending the formatted `originalAmount` string to the UI.
+- Updated the backend scrape function to explicitly send the `isNonILS` variable to the frontend for every transaction.
+- Updated the frontend `results.js` currency filter logic to directly check true/false on the `isNonILS` property instead of relying on string matching.
+
+**Where in code:**
+- `server.js` (Added `isNonILS` to the array exported to the client).
+- `public/results.js` (Updated Currency filter `if` statements).

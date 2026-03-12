@@ -311,6 +311,10 @@ app.post('/api/scrape-all', requireAuth, async (req, res) => {
         return res.status(400).json({ error: 'No companies registered. Add companies first.' });
     }
 
+    // Always fetch data for the last 3 months
+    const scrapeStartDate = new Date();
+    scrapeStartDate.setMonth(scrapeStartDate.getMonth() - 3);
+
     // Decrypt all credentials and launch scrapers in parallel
     const scrapePromises = companyIds.map(async (companyId) => {
         try {
@@ -321,7 +325,7 @@ app.post('/api/scrape-all', requireAuth, async (req, res) => {
 
             const scraper = createScraper({
                 companyId,
-                startDate: new Date(startDate),
+                startDate: scrapeStartDate,
                 combineInstallments: false,
                 showBrowser: false
             });

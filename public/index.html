@@ -552,6 +552,7 @@
                 if (data.transactions.length > 0) {
                     setScrapeStatus('success', `Found ${data.transactions.length} total transactions`);
                     // Store and navigate to results
+                    sessionStorage.setItem('scrapeStartDate', startDate);
                     sessionStorage.setItem('scrapeResults', JSON.stringify({
                         transactions: data.transactions,
                         companyId: 'all',

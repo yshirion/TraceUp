@@ -242,6 +242,12 @@
         </button>
     </div>
 
+    <div id="loadOlderContainer" style="display:none; text-align:center; margin-bottom:16px;">
+        <button class="btn-back" onclick="loadOlder()" style="background:rgba(16, 185, 129, 0.1); border-color:rgba(16, 185, 129, 0.3); color:var(--success);">
+            Load <span id="olderCount"></span> Older Transactions
+        </button>
+    </div>
+
     <div class="table-container">
         <div class="table-scroll">
             <table>
@@ -264,7 +270,8 @@
     </div>
 
     <script>
-        let allTransactions = [];
+        let allTransactions = [];        // The full 3 months from the server
+        let visibleTransactions = [];    // What we currently display (filtered or all)
         let currentSort = 'date';
         let sortAsc = false; // newest first by default
 
@@ -285,17 +292,53 @@
             const parsed = JSON.parse(data);
             allTransactions = parsed.transactions;
 
-            document.getElementById('countBadge').textContent = `${allTransactions.length} transactions`;
+            // Initially filter by the startDate the user picked in the dashboard
+            const startDateStr = sessionStorage.getItem('scrapeStartDate');
+            if (startDateStr) {
+                const userChoiceDate = new Date(startDateStr);
+                userChoiceDate.setHours(0, 0, 0, 0);
+                
+                visibleTransactions = allTransactions.filter(t => {
+                    return parseDate(t.date) >= userChoiceDate;
+                });
+            } else {
+                visibleTransactions = [...allTransactions];
+            }
 
-            // Default sort: by date, newest first
-            sortBy('date');
+            updateBadgesAndSort();
         }
 
-        function sortBy(field) {
+        function loadOlder() {
+            // Show everything (up to 3 months)
+            visibleTransactions = [...allTransactions];
+            updateBadgesAndSort();
+            // Hide the button since everything is shown
+            document.getElementById('loadOlderContainer').style.display = 'none';
+        }
+
+        function updateBadgesAndSort() {
+            document.getElementById('countBadge').textContent = `${visibleTransactions.length} transactions`;
+            
+            // Show/hide "Load Older" button if we have hidden transactions
+            const hiddenCount = allTransactions.length - visibleTransactions.length;
+            const container = document.getElementById('loadOlderContainer');
+            if (container) {
+                if (hiddenCount > 0) {
+                    container.style.display = 'block';
+                    document.getElementById('olderCount').textContent = hiddenCount;
+                } else {
+                    container.style.display = 'none';
+                }
+            }
+
+            sortBy(currentSort, true); // re-apply sort
+        }
+
+        function sortBy(field, keepDirection = false) {
             // Toggle direction if clicking same sort button
-            if (currentSort === field) {
+            if (!keepDirection && currentSort === field) {
                 sortAsc = !sortAsc;
-            } else {
+            } else if (!keepDirection) {
                 currentSort = field;
                 // Default directions: date newest first, company A-Z, amount highest first
                 sortAsc = field === 'company';
@@ -310,8 +353,8 @@
             document.getElementById('arrowCompany').textContent = currentSort === 'company' ? (sortAsc ? '▲' : '▼') : '▼';
             document.getElementById('arrowAmount').textContent = currentSort === 'amount' ? (sortAsc ? '▲' : '▼') : '▼';
 
-            // Sort
-            const sorted = [...allTransactions].sort((a, b) => {
+            // Sort visible transactions
+            const sorted = [...visibleTransactions].sort((a, b) => {
                 let cmp = 0;
                 if (field === 'date') {
                     cmp = parseDate(a.date) - parseDate(b.date);
@@ -331,7 +374,7 @@
             const tbody = document.getElementById('tableBody');
 
             if (transactions.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="no-data">No transactions</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="no-data">No transactions found for the selected date range.</td></tr>';
                 return;
             }
 

@@ -71,7 +71,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     rolling: true, // resets expiry on every request (activity-based timeout)
-    cookie: { maxAge: 2 * 60 * 1000 } // 2 minutes of inactivity
+    cookie: { maxAge: 4 * 60 * 1000 } // 4 minutes of inactivity
 }));
 
 // Serve static files
@@ -260,6 +260,11 @@ function processTransactions(scrapeResult, companyId) {
 
             const memo = isInstallments ? (txn.memo || '') : '';
 
+            const banksList = [
+                'hapoalim', 'beinleumi', 'union', 'otsarHahayal', 'discount',
+                'mercantile', 'mizrahi', 'leumi', 'massad', 'yahav', 'oneZero', 'pagi'
+            ];
+
             transactions.push({
                 company: companyId,
                 account: account.accountNumber,
@@ -271,7 +276,7 @@ function processTransactions(scrapeResult, companyId) {
                 category: txn.category || '',
                 isNonILS,
                 isInstallments,
-                companyType: banks.includes(companyId) ? 'bank' : 'creditCard'
+                companyType: banksList.includes(companyId) ? 'bank' : 'creditCard'
             });
         });
     });
@@ -351,8 +356,12 @@ app.post('/api/scrape-all', requireAuth, async (req, res) => {
             const result = await scraper.scrape(credentials);
 
             if (result.success) {
-                if (companyId === 'leumi' && result.accounts[0]?.txns[0]?.rawTransaction) {
-                    require('fs').writeFileSync('raw-txn.json', JSON.stringify(result.accounts[0].txns[0].rawTransaction, null, 2));
+                if (result.accounts && result.accounts[0] && result.accounts[0].txns && result.accounts[0].txns[0] && result.accounts[0].txns[0].rawTransaction) {
+                    try {
+                        fs.writeFileSync('raw-txn.json', JSON.stringify(result.accounts[0].txns[0].rawTransaction, null, 2));
+                    } catch (e) {
+                        console.error('Failed to write raw-txn.json', e);
+                    }
                 }
                 return {
                     companyId,

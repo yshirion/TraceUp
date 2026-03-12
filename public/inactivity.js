@@ -1,6 +1,6 @@
-// ═══ Auto-logout after 2 minutes of inactivity ═══
+// ═══ Auto-logout after 4 minutes of inactivity ═══
 (function () {
-    const TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
+    const TIMEOUT_MS = 4 * 60 * 1000; // 4 minutes
     const HEARTBEAT_MS = 30 * 1000;   // ping server every 30s while active
     let logoutTimer;
     let heartbeatInterval;

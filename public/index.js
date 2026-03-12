@@ -66,22 +66,53 @@ async function loadCompanies() {
         </li>`;
     };
 
-    const banks = keys.filter(k => companies[k].type === 'bank');
-    const ccs = keys.filter(k => companies[k].type === 'creditCard');
+    const BANKS_LIST = [
+        'hapoalim', 'beinleumi', 'union', 'otsarHahayal', 'discount',
+        'mercantile', 'mizrahi', 'leumi', 'massad', 'yahav', 'oneZero', 'pagi'
+    ];
+
+    const getType = (id, c) => c.type || (BANKS_LIST.includes(id) ? 'bank' : 'creditCard');
+
+    const banks = keys.filter(k => getType(k, companies[k]) === 'bank');
+    const ccs = keys.filter(k => getType(k, companies[k]) === 'creditCard');
 
     // Clear everything except the hidden empty element
     Array.from(list.children).forEach(child => {
         if (child.id !== 'emptyCompanies') list.removeChild(child);
     });
 
+    const fragment = document.createDocumentFragment();
+
+    const addHeader = (text) => {
+        const li = document.createElement('li');
+        li.className = 'company-group-title';
+        li.textContent = text;
+        fragment.appendChild(li);
+    };
+
+    const addItem = (id, c) => {
+        const date = c.addedAt ? new Date(c.addedAt).toLocaleDateString() : '';
+        const li = document.createElement('li');
+        li.className = 'company-item';
+        li.id = `company-item-${id}`;
+        li.innerHTML = `<div>
+            <div class="name">${c.name}</div>
+            <div class="date">Added ${date}</div>
+        </div>
+        <button class="btn-remove" onclick="removeCompany('${id}')" title="Remove">✕</button>`;
+        fragment.appendChild(li);
+    };
+
     if (banks.length > 0) {
-        list.innerHTML += `<li class="company-group-title">🏦 Banks</li>`;
-        list.innerHTML += banks.map(id => renderItem(id, companies[id])).join('');
+        addHeader('🏦 Banks');
+        banks.forEach(id => addItem(id, companies[id]));
     }
     if (ccs.length > 0) {
-        list.innerHTML += `<li class="company-group-title">💳 Credit Cards</li>`;
-        list.innerHTML += ccs.map(id => renderItem(id, companies[id])).join('');
+        addHeader('💳 Credit Cards');
+        ccs.forEach(id => addItem(id, companies[id]));
     }
+
+    list.appendChild(fragment);
 }
 
 async function removeCompany(id) {

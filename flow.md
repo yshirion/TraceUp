@@ -79,8 +79,9 @@ This file documents all changes made to the application. It is appended to seque
 **What was done:**
 - Fixed a bug where the Currency filter was not working. The frontend originally tried to read the `originalCurrency` field, but the backend was only sending the formatted `originalAmount` string to the UI.
 - Updated the backend scrape function to explicitly send the `isNonILS` variable to the frontend for every transaction.
-- Updated the frontend `results.js` currency filter logic to directly check true/false on the `isNonILS` property instead of relying on string matching.
+- Updated the frontend `results.js` currency filter logic to directly check true/false on the `isNonILS` property.
+- Added a backwards-compatibility fallback in the frontend Javascript so that if `isNonILS` is `undefined` (because the user still has old data stored in their browser cache from before this fix), it safely falls back to manually checking if `originalCurrency` exists and is not ILS, which works for older cached results.
 
 **Where in code:**
 - `server.js` (Added `isNonILS` to the array exported to the client).
-- `public/results.js` (Updated Currency filter `if` statements).
+- `public/results.js` (Updated Currency filter `if` statements with backwards compatibility).

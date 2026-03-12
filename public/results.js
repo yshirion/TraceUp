@@ -156,8 +156,14 @@ function applyFilters() {
         if (account !== 'all' && t.account !== account) return false;
 
         // 4. Currency filter
-        if (currency === 'ils' && t.isNonILS) return false;
-        if (currency === 'foreign' && !t.isNonILS) return false;
+        let isForeign = t.isNonILS;
+        if (isForeign === undefined) {
+            // Fallback for older cached scrapes that don't have isNonILS yet
+            isForeign = !!t.originalCurrency && t.originalCurrency !== 'ILS' && t.originalCurrency !== '₪';
+        }
+
+        if (currency === 'ils' && isForeign) return false;
+        if (currency === 'foreign' && !isForeign) return false;
 
         // 5. Installments filter
         const isInstallment = t.installments && t.installments.number > 0;

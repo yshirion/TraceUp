@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Israeli Bank Scraper</title>
+    <meta name="description" content="Dashboard for managing and scraping Israeli bank transactions">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            align-items: stretch;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            animation: fadeInDown 0.4s ease-out;
+        }
+
+        .top-bar .greeting {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #818cf8, #6366f1, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn-logout {
+            padding: 8px 18px;
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: var(--radius-sm);
+            color: var(--error);
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-logout:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--error);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 700px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-card);
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .section-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 18px;
+        }
+
+        .section-title .icon {
+            font-size: 1.2rem;
+        }
+
+        /* Company list */
+        .company-list {
+            list-style: none;
+        }
+
+        .company-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+            transition: var(--transition);
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .company-item:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            background: rgba(99, 102, 241, 0.04);
+        }
+
+        .company-item .name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .company-item .date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .btn-remove {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+
+        .btn-remove:hover {
+            color: var(--error);
+            background: rgba(239, 68, 68, 0.12);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px 16px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .empty-state .empty-icon {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        /* Add company form */
+        .add-form {
+            border-top: 1px solid var(--border-color);
+            padding-top: 16px;
+            margin-top: 16px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #6366f1, #7c3aed);
+            border: none;
+            border-radius: var(--radius-sm);
+            color: white;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, #818cf8, #8b5cf6);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Scrape section */
+        .btn-scrape-all {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            border-radius: var(--radius-sm);
+            color: white;
+            font-family: inherit;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            letter-spacing: 0.01em;
+        }
+
+        .btn-scrape-all:hover:not(:disabled) {
+            background: linear-gradient(135deg, #34d399, #10b981);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-scrape-all:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Summary cards */
+        .scrape-summary {
+            margin-top: 16px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .summary-item.success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .summary-item.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--error);
+        }
+
+        .summary-item .label {
+            font-weight: 600;
+        }
+
+        /* Modal overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 28px;
+            width: 90%;
+            max-width: 440px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .modal h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .modal-close {
+            float: right;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div>
+            <div class="greeting" id="greeting">🏦 Dashboard</div>
+        </div>
+        <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="dashboard-grid">
+        <!-- My Companies -->
+        <div class="section-card">
+            <div class="section-title"><span class="icon">📋</span> My Companies</div>
+            <ul class="company-list" id="companyList">
+                <li class="empty-state" id="emptyCompanies">
+                    <span class="empty-icon">📭</span>
+                    No companies registered yet
+                </li>
+            </ul>
+            <button class="btn-primary" onclick="openAddModal()" style="margin-top:12px">
+                ＋ Add Company
+            </button>
+        </div>
+
+        <!-- Scrape All -->
+        <div class="section-card">
+            <div class="section-title"><span class="icon">🚀</span> Scrape Transactions</div>
+            <div class="form-group">
+                <label for="startDate">Start Date</label>
+                <input type="date" id="startDate" required>
+            </div>
+            <button class="btn-scrape-all" id="btnScrapeAll" onclick="scrapeAll()">
+                ⚡ Scrape All Companies
+            </button>
+            <div id="scrapeStatus"></div>
+            <div class="scrape-summary" id="scrapeSummary"></div>
+        </div>
+    </div>
+
+    <!-- Add Company Modal -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeAddModal()">✕</button>
+            <h3>Add Company</h3>
+            <form id="addCompanyForm">
+                <div class="form-group">
+                    <label for="newCompanySelect">Company</label>
+                    <select id="newCompanySelect" required>
+                        <option value="">Loading...</option>
+                    </select>
+                </div>
+                <div id="newLoginFields"></div>
+                <button type="submit" class="btn-primary" id="btnAddCompany">Save Company</button>
+            </form>
+            <div id="addStatus"></div>
+        </div>
+    </div>
+
+    <script>
+        const FIELD_LABELS = {
+            username: 'Username', password: 'Password', userCode: 'User Code',
+            id: 'ID Number', num: 'Code', card6Digits: 'Last 6 Digits of Card',
+            nationalID: 'National ID', email: 'Email', phoneNumber: 'Phone Number'
+        };
+
+        let scrapersData = {};
+        let currentUser = '';
+
+        // ═══ Auth Check ═══
+        async function checkAuth() {
+            try {
+                const res = await fetch('/api/auth/me');
+                const data = await res.json();
+                if (!data.authenticated) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                currentUser = data.username;
+                document.getElementById('greeting').textContent = `🏦 Hey, ${currentUser}`;
+                await loadScrapers();
+                await loadCompanies();
+            } catch {
+                window.location.href = 'login.html';
+            }
+        }
+
+        async function logout() {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = 'login.html';
+        }
+
+        // ═══ Scrapers ═══
+        async function loadScrapers() {
+            const res = await fetch('/api/scrapers');
+            scrapersData = await res.json();
+        }
+
+        // ═══ Companies ═══
+        async function loadCompanies() {
+            const res = await fetch('/api/companies');
+            const companies = await res.json();
+            const list = document.getElementById('companyList');
+            const empty = document.getElementById('emptyCompanies');
+
+            const keys = Object.keys(companies);
+            if (keys.length === 0) {
+                list.innerHTML = '';
+                list.appendChild(empty);
+                empty.style.display = '';
+                return;
+            }
+
+            list.innerHTML = keys.map(id => {
+                const c = companies[id];
+                const date = c.addedAt ? new Date(c.addedAt).toLocaleDateString() : '';
+                return `<li class="company-item">
+                    <div>
+                        <div class="name">${c.name}</div>
+                        <div class="date">Added ${date}</div>
+                    </div>
+                    <button class="btn-remove" onclick="removeCompany('${id}')" title="Remove">✕</button>
+                </li>`;
+            }).join('');
+        }
+
+        async function removeCompany(id) {
+            if (!confirm(`Remove ${scrapersData[id]?.name || id}?`)) return;
+            await fetch(`/api/companies/${id}`, { method: 'DELETE' });
+            await loadCompanies();
+        }
+
+        // ═══ Add Company Modal ═══
+        function openAddModal() {
+            document.getElementById('addModal').classList.add('active');
+            const select = document.getElementById('newCompanySelect');
+            select.innerHTML = '<option value="">-- Select a company --</option>';
+            for (const [key, info] of Object.entries(scrapersData)) {
+                select.innerHTML += `<option value="${key}">${info.name}</option>`;
+            }
+            document.getElementById('newLoginFields').innerHTML = '';
+            setAddStatus(null);
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.remove('active');
+        }
+
+        document.getElementById('newCompanySelect').addEventListener('change', (e) => {
+            const container = document.getElementById('newLoginFields');
+            container.innerHTML = '';
+            const companyId = e.target.value;
+            if (!companyId || !scrapersData[companyId]) return;
+
+            scrapersData[companyId].loginFields.forEach(field => {
+                const div = document.createElement('div');
+                div.className = 'form-group';
+                div.innerHTML = `
+                    <label for="new-${field}">${FIELD_LABELS[field] || field}</label>
+                    <input type="${field === 'password' ? 'password' : 'text'}"
+                           id="new-${field}" name="${field}"
+                           placeholder="${FIELD_LABELS[field] || field}" required>`;
+                container.appendChild(div);
+            });
+        });
+
+        document.getElementById('addCompanyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const companyId = document.getElementById('newCompanySelect').value;
+            if (!companyId) return;
+
+            const credentials = {};
+            scrapersData[companyId].loginFields.forEach(field => {
+                credentials[field] = document.getElementById(`new-${field}`).value;
+            });
+
+            const btn = document.getElementById('btnAddCompany');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            setAddStatus('loading', 'Saving credentials...');
+
+            try {
+                const res = await fetch('/api/companies/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ companyId, credentials })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    setAddStatus('success', data.message);
+                    await loadCompanies();
+                    setTimeout(closeAddModal, 800);
+                } else {
+                    setAddStatus('error', data.error);
+                }
+            } catch (err) {
+                setAddStatus('error', err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save Company';
+            }
+        });
+
+        function setAddStatus(type, message) {
+            const el = document.getElementById('addStatus');
+            if (!type) { el.innerHTML = ''; return; }
+            const icon = type === 'loading' ? '<div class="spinner"></div>' : '';
+            el.innerHTML = `<div class="status-message status-${type}" style="margin-top:14px">${icon} ${message}</div>`;
+        }
+
+        // ═══ Scrape All ═══
+        async function scrapeAll() {
+            const startDate = document.getElementById('startDate').value;
+            if (!startDate) {
+                setScrapeStatus('error', 'Please select a start date');
+                return;
+            }
+
+            const btn = document.getElementById('btnScrapeAll');
+            btn.disabled = true;
+            btn.textContent = '⏳ Scraping...';
+            setScrapeStatus('loading', 'Scraping all companies in parallel — this may take a few minutes...');
+            document.getElementById('scrapeSummary').innerHTML = '';
+
+            try {
+                const res = await fetch('/api/scrape-all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ startDate })
+                });
+                const data = await res.json();
+
+                if (data.error) {
+                    setScrapeStatus('error', data.error);
+                    return;
+                }
+
+                // Show per-company summary
+                const summaryEl = document.getElementById('scrapeSummary');
+                summaryEl.innerHTML = data.summary.map(s => {
+                    if (s.status === 'success') {
+                        return `<div class="summary-item success">
+                            <span class="label">✅ ${s.name}</span>
+                            <span>${s.count} transactions</span>
+                        </div>`;
+                    } else {
+                        return `<div class="summary-item error">
+                            <span class="label">❌ ${s.name}</span>
+                            <span>${s.error}</span>
+                        </div>`;
+                    }
+                }).join('');
+
+                if (data.transactions.length > 0) {
+                    setScrapeStatus('success', `Found ${data.transactions.length} total transactions`);
+                    // Store and navigate to results
+                    sessionStorage.setItem('scrapeResults', JSON.stringify({
+                        transactions: data.transactions,
+                        companyId: 'all',
+                        summary: data.summary
+                    }));
+                    setTimeout(() => window.location.href = 'results.html', 1500);
+                } else {
+                    setScrapeStatus('error', 'No transactions found across any company');
+                }
+
+            } catch (err) {
+                setScrapeStatus('error', err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '⚡ Scrape All Companies';
+            }
+        }
+
+        function setScrapeStatus(type, message) {
+            const el = document.getElementById('scrapeStatus');
+            if (!type) { el.innerHTML = ''; return; }
+            const icon = type === 'loading' ? '<div class="spinner"></div>' : '';
+            el.innerHTML = `<div class="status-message status-${type}" style="margin-top:14px">${icon} ${message}</div>`;
+        }
+
+        // Default start date: the last 9th of the month
+        // If today >= 9th → use 9th of current month
+        // If today < 9th → use 9th of previous month
+        const now = new Date();
+        const d = new Date(now.getFullYear(), now.getMonth(), 9);
+        if (now.getDate() < 9) {
+            d.setMonth(d.getMonth() - 1);
+        }
+        document.getElementById('startDate').value = d.toISOString().split('T')[0];
+
+        checkAuth();
+    </script>    <script src="inactivity.js"></script>
+</body>
+
+</html>

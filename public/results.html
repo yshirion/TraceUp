@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transactions — Israeli Bank Scraper</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            padding: 30px 20px;
+            align-items: stretch;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        .results-page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            animation: fadeInDown 0.4s ease-out;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .results-page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .results-page-header .info {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--accent-hover);
+            white-space: nowrap;
+        }
+
+        .btn-back {
+            padding: 8px 16px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: var(--radius-sm);
+            color: var(--accent);
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .btn-back:hover {
+            background: rgba(99, 102, 241, 0.2);
+        }
+
+        /* Sort bar */
+        .sort-bar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 16px;
+            animation: fadeInUp 0.35s ease-out;
+        }
+
+        .sort-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .sort-btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .sort-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .sort-btn.active {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .sort-arrow {
+            font-size: 0.65rem;
+            opacity: 0.7;
+        }
+
+        .table-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-card);
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+            max-height: 75vh;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        thead {
+            background: rgba(99, 102, 241, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        th {
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--accent-hover);
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.08);
+            color: var(--text-primary);
+        }
+
+        tr:hover td {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .amount-positive {
+            color: var(--error);
+            font-weight: 600;
+        }
+
+        .amount-negative {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .text-muted {
+            color: var(--text-muted);
+        }
+
+        .company-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: rgba(99, 102, 241, 0.12);
+            color: var(--accent-hover);
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 16px 12px;
+            }
+
+            .results-page-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            th, td {
+                padding: 10px 12px;
+                font-size: 0.82rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="results-page-header">
+        <div style="display:flex;align-items:center;gap:14px">
+            <a href="index.html" class="btn-back">← Dashboard</a>
+            <h1>📊 Transactions</h1>
+        </div>
+        <div class="info">
+            <span class="badge" id="countBadge"></span>
+        </div>
+    </div>
+
+    <div class="sort-bar">
+        <span class="sort-label">Sort by:</span>
+        <button class="sort-btn active" id="sortDate" onclick="sortBy('date')">
+            Date <span class="sort-arrow" id="arrowDate">▼</span>
+        </button>
+        <button class="sort-btn" id="sortCompany" onclick="sortBy('company')">
+            Company <span class="sort-arrow" id="arrowCompany">▼</span>
+        </button>
+        <button class="sort-btn" id="sortAmount" onclick="sortBy('amount')">
+            Amount <span class="sort-arrow" id="arrowAmount">▼</span>
+        </button>
+    </div>
+
+    <div class="table-container">
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Company</th>
+                        <th>Account</th>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Description</th>
+                        <th>Original Amount</th>
+                        <th>Memo</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let allTransactions = [];
+        let currentSort = 'date';
+        let sortAsc = false; // newest first by default
+
+        // Parse dd/mm/yyyy to Date for comparison
+        function parseDate(str) {
+            const [dd, mm, yyyy] = str.split('/');
+            return new Date(+yyyy, +mm - 1, +dd);
+        }
+
+        function init() {
+            const data = sessionStorage.getItem('scrapeResults');
+            if (!data) {
+                document.getElementById('tableBody').innerHTML =
+                    '<tr><td colspan="8" class="no-data">No data — please run a scrape first</td></tr>';
+                return;
+            }
+
+            const parsed = JSON.parse(data);
+            allTransactions = parsed.transactions;
+
+            document.getElementById('countBadge').textContent = `${allTransactions.length} transactions`;
+
+            // Default sort: by date, newest first
+            sortBy('date');
+        }
+
+        function sortBy(field) {
+            // Toggle direction if clicking same sort button
+            if (currentSort === field) {
+                sortAsc = !sortAsc;
+            } else {
+                currentSort = field;
+                // Default directions: date newest first, company A-Z, amount highest first
+                sortAsc = field === 'company';
+            }
+
+            // Update button states
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('sort' + field.charAt(0).toUpperCase() + field.slice(1)).classList.add('active');
+
+            // Update arrows
+            document.getElementById('arrowDate').textContent = currentSort === 'date' ? (sortAsc ? '▲' : '▼') : '▼';
+            document.getElementById('arrowCompany').textContent = currentSort === 'company' ? (sortAsc ? '▲' : '▼') : '▼';
+            document.getElementById('arrowAmount').textContent = currentSort === 'amount' ? (sortAsc ? '▲' : '▼') : '▼';
+
+            // Sort
+            const sorted = [...allTransactions].sort((a, b) => {
+                let cmp = 0;
+                if (field === 'date') {
+                    cmp = parseDate(a.date) - parseDate(b.date);
+                } else if (field === 'company') {
+                    cmp = a.company.localeCompare(b.company);
+                    if (cmp === 0) cmp = parseDate(a.date) - parseDate(b.date); // secondary sort by date
+                } else if (field === 'amount') {
+                    cmp = a.chargedAmount - b.chargedAmount;
+                }
+                return sortAsc ? cmp : -cmp;
+            });
+
+            renderTable(sorted);
+        }
+
+        function renderTable(transactions) {
+            const tbody = document.getElementById('tableBody');
+
+            if (transactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="no-data">No transactions</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = transactions.map((t, i) => {
+                const amountClass = t.chargedAmount >= 0 ? 'amount-positive' : 'amount-negative';
+                return `<tr>
+                <td class="text-muted">${i + 1}</td>
+                <td><span class="company-badge">${t.company}</span></td>
+                <td>${t.account}</td>
+                <td>${t.date}</td>
+                <td class="${amountClass}">${t.chargedAmount.toFixed(2)}</td>
+                <td>${t.description}</td>
+                <td>${t.originalAmount || '<span class="text-muted">—</span>'}</td>
+                <td>${t.memo || '<span class="text-muted">—</span>'}</td>
+            </tr>`;
+            }).join('');
+        }
+
+        init();
+    </script>    <script src="inactivity.js"></script>
+</body>
+
+</html>

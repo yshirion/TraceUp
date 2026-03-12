@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — Israeli Bank Scraper</title>
+    <meta name="description" content="Login to your Israeli bank scraper dashboard">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .auth-container {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 28px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            background: none;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            font-family: inherit;
+        }
+
+        .auth-tab:hover {
+            color: var(--text-secondary);
+        }
+
+        .auth-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .btn-auth {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #6366f1, #7c3aed);
+            border: none;
+            border-radius: var(--radius-sm);
+            color: white;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 8px;
+        }
+
+        .btn-auth:hover:not(:disabled) {
+            background: linear-gradient(135deg, #818cf8, #8b5cf6);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-auth:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .logo-icon {
+            font-size: 3rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="header">
+            <span class="logo-icon">🏦</span>
+            <h1>Bank Scraper</h1>
+            <p>Manage all your Israeli bank accounts in one place</p>
+        </div>
+
+        <div class="card">
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchTab('login')">Login</button>
+                <button class="auth-tab" onclick="switchTab('register')">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <form class="auth-form active" id="loginForm">
+                <div class="form-group">
+                    <label for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" placeholder="Enter username" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter password" required
+                        autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn-auth" id="btnLogin">Login</button>
+            </form>
+
+            <!-- Register Form -->
+            <form class="auth-form" id="registerForm">
+                <div class="form-group">
+                    <label for="regUsername">Username</label>
+                    <input type="text" id="regUsername" placeholder="Choose a username (3+ chars)" required
+                        minlength="3" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="regPassword">Password</label>
+                    <input type="password" id="regPassword" placeholder="Choose a password (4+ chars)" required
+                        minlength="4" autocomplete="new-password">
+                </div>
+                <div class="form-group">
+                    <label for="regConfirm">Confirm Password</label>
+                    <input type="password" id="regConfirm" placeholder="Confirm password" required
+                        autocomplete="new-password">
+                </div>
+                <button type="submit" class="btn-auth" id="btnRegister">Create Account</button>
+            </form>
+
+            <div id="status"></div>
+        </div>
+    </div>
+
+    <script>
+        // Check if already logged in
+        (async () => {
+            try {
+                const res = await fetch('/api/auth/me');
+                const data = await res.json();
+                if (data.authenticated) {
+                    window.location.href = 'index.html';
+                }
+            } catch { }
+        })();
+
+        function switchTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+
+            if (tab === 'login') {
+                document.querySelector('.auth-tab:nth-child(1)').classList.add('active');
+                document.getElementById('loginForm').classList.add('active');
+            } else {
+                document.querySelector('.auth-tab:nth-child(2)').classList.add('active');
+                document.getElementById('registerForm').classList.add('active');
+            }
+            setStatus(null);
+        }
+
+        function setStatus(type, message) {
+            const el = document.getElementById('status');
+            if (!type) { el.innerHTML = ''; return; }
+            const icon = type === 'loading' ? '<div class="spinner"></div>' : '';
+            el.innerHTML = `<div class="status-message status-${type}">${icon} ${message}</div>`;
+        }
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnLogin');
+            btn.disabled = true;
+            btn.textContent = 'Logging in...';
+            setStatus('loading', 'Authenticating...');
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: document.getElementById('loginUsername').value,
+                        password: document.getElementById('loginPassword').value
+                    })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    setStatus('success', 'Welcome back! Redirecting...');
+                    setTimeout(() => window.location.href = 'index.html', 500);
+                } else {
+                    setStatus('error', data.error);
+                }
+            } catch (err) {
+                setStatus('error', err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Login';
+            }
+        });
+
+        // Register
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pass = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regConfirm').value;
+
+            if (pass !== confirm) {
+                setStatus('error', 'Passwords do not match');
+                return;
+            }
+
+            const btn = document.getElementById('btnRegister');
+            btn.disabled = true;
+            btn.textContent = 'Creating account...';
+            setStatus('loading', 'Setting up your account...');
+
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: document.getElementById('regUsername').value,
+                        password: pass
+                    })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    setStatus('success', 'Account created! Redirecting...');
+                    setTimeout(() => window.location.href = 'index.html', 500);
+                } else {
+                    setStatus('error', data.error);
+                }
+            } catch (err) {
+                setStatus('error', err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+            }
+        });
+    </script>
+</body>
+
+</html>

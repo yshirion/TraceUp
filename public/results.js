@@ -44,21 +44,132 @@ function init() {
         dateInput.value = fmt(past);
     }
 
-    applyDateFilter();
+    populateDropdowns();
+    applyFilters();
 }
 
-function applyDateFilter() {
-    const dateStr = document.getElementById('filterFromDate').value;
-    if (!dateStr) {
-        visibleTransactions = [...allTransactions];
+function populateDropdowns() {
+    const companies = new Set();
+    const accounts = new Set();
+    
+    let absMaxAmount = 0;
+
+    allTransactions.forEach(t => {
+        companies.add(t.company);
+        accounts.add(t.account);
+        const absVal = Math.abs(t.chargedAmount);
+        if (absVal > absMaxAmount) absMaxAmount = absVal;
+    });
+
+    const companySel = document.getElementById('filterCompany');
+    Array.from(companies).sort().forEach(c => {
+        companySel.innerHTML += `<option value="${c}">${c}</option>`;
+    });
+
+    const accountSel = document.getElementById('filterAccount');
+    Array.from(accounts).sort().forEach(a => {
+        accountSel.innerHTML += `<option value="${a}">${a}</option>`;
+    });
+
+    // Setup amount sliders
+    const maxValRounded = Math.ceil(absMaxAmount);
+    document.getElementById('amountMin').min = 0;
+    document.getElementById('amountMin').max = maxValRounded;
+    document.getElementById('amountMin').value = 0;
+    
+    document.getElementById('amountMax').min = 0;
+    document.getElementById('amountMax').max = maxValRounded;
+    document.getElementById('amountMax').value = maxValRounded;
+
+    document.getElementById('amountMinRaw').value = 0;
+    document.getElementById('amountMaxRaw').value = maxValRounded;
+    document.getElementById('amountDisplay').textContent = `0 to ${maxValRounded}`;
+}
+
+function syncAmountInputs(fromRaw) {
+    const minSlider = document.getElementById('amountMin');
+    const maxSlider = document.getElementById('amountMax');
+    const minRaw = document.getElementById('amountMinRaw');
+    const maxRaw = document.getElementById('amountMaxRaw');
+    const display = document.getElementById('amountDisplay');
+
+    let minVal, maxVal;
+
+    if (fromRaw) {
+        minVal = parseInt(minRaw.value) || 0;
+        maxVal = parseInt(maxRaw.value) || 0;
+        minSlider.value = minVal;
+        maxSlider.value = maxVal;
     } else {
-        const userChoiceDate = new Date(dateStr);
-        userChoiceDate.setHours(0, 0, 0, 0);
+        minVal = parseInt(minSlider.value);
+        maxVal = parseInt(maxSlider.value);
         
-        visibleTransactions = allTransactions.filter(t => {
-            return parseDate(t.date) >= userChoiceDate;
-        });
+        // Prevent sliders from crossing
+        if (minVal > maxVal) {
+            if (this.id === 'amountMin') minVal = maxVal;
+            else maxVal = minVal;
+            minSlider.value = minVal;
+            maxSlider.value = maxVal;
+        }
+
+        minRaw.value = minVal;
+        maxRaw.value = maxVal;
     }
+
+    display.textContent = `${minVal} to ${maxVal}`;
+    applyFilters();
+}
+
+function resetFilters() {
+    document.getElementById('filterCompany').value = 'all';
+    document.getElementById('filterAccount').value = 'all';
+    document.getElementById('filterCurrency').value = 'all';
+    document.getElementById('filterInstallments').value = 'all';
+    
+    document.getElementById('amountMin').value = 0;
+    document.getElementById('amountMax').value = document.getElementById('amountMax').max;
+    syncAmountInputs(false); // will trigger applyFilters
+}
+
+function applyFilters() {
+    const dateStr = document.getElementById('filterFromDate').value;
+    const company = document.getElementById('filterCompany').value;
+    const account = document.getElementById('filterAccount').value;
+    const currency = document.getElementById('filterCurrency').value;
+    const installments = document.getElementById('filterInstallments').value;
+    
+    const amountMin = parseFloat(document.getElementById('amountMin').value) || 0;
+    const amountMax = parseFloat(document.getElementById('amountMax').value) || Infinity;
+
+    // Base date logic
+    const userChoiceDate = dateStr ? new Date(dateStr) : null;
+    if (userChoiceDate) userChoiceDate.setHours(0, 0, 0, 0);
+    
+    visibleTransactions = allTransactions.filter(t => {
+        // 1. Date filter
+        if (userChoiceDate && parseDate(t.date) < userChoiceDate) return false;
+
+        // 2. Company filter
+        if (company !== 'all' && t.company !== company) return false;
+
+        // 3. Account filter
+        if (account !== 'all' && t.account !== account) return false;
+
+        // 4. Currency filter
+        if (currency === 'ils' && t.originalCurrency && t.originalCurrency !== 'ILS' && t.originalCurrency !== '₪') return false;
+        if (currency === 'foreign' && (!t.originalCurrency || t.originalCurrency === 'ILS' || t.originalCurrency === '₪')) return false;
+
+        // 5. Installments filter
+        const isInstallment = t.installments && t.installments.number > 0;
+        if (installments === 'only' && !isInstallment) return false;
+        if (installments === 'none' && isInstallment) return false;
+
+        // 6. Amount Amount (Absolute Value) Range
+        const absAmount = Math.abs(t.chargedAmount);
+        if (absAmount < amountMin || absAmount > amountMax) return false;
+
+        return true;
+    });
 
     document.getElementById('countBadge').textContent = `${visibleTransactions.length} transactions`;
     sortBy(currentSort, true); // re-apply sort with new filtered list

@@ -230,23 +230,90 @@
         </div>
     </div>
 
-    <div class="results-controls" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
-        <div class="filter-group" style="display:flex; align-items:center; gap:8px;">
-            <span class="sort-label">From:</span>
-            <input type="date" id="filterFromDate" onchange="applyDateFilter()" style="padding:6px 10px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-card); color:var(--text-primary); font-family:inherit;">
+    <div class="results-controls" style="display:flex; flex-direction:column; gap:16px; margin-bottom:20px; background:var(--bg-card); padding:16px; border-radius:var(--radius); border:1px solid var(--border-color);">
+        
+        <!-- Top Row: Sort Buttons -->
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; border-bottom:1px solid rgba(99, 102, 241, 0.1); padding-bottom:12px;">
+            <div class="sort-bar" style="margin-bottom:0;">
+                <span class="sort-label">Sort by:</span>
+                <button class="sort-btn active" id="sortDate" onclick="sortBy('date')">
+                    Date <span class="sort-arrow" id="arrowDate">▼</span>
+                </button>
+                <button class="sort-btn" id="sortCompany" onclick="sortBy('company')">
+                    Company <span class="sort-arrow" id="arrowCompany">▼</span>
+                </button>
+                <button class="sort-btn" id="sortAccount" onclick="sortBy('account')">
+                    Account <span class="sort-arrow" id="arrowAccount">▼</span>
+                </button>
+            </div>
+            <button class="btn-back" onclick="resetFilters()" style="padding:6px 12px; font-size:0.8rem;">Reset Filters</button>
         </div>
-        <div class="sort-bar" style="margin-bottom:0;">
-            <span class="sort-label">Sort by:</span>
-            <button class="sort-btn active" id="sortDate" onclick="sortBy('date')">
-                Date <span class="sort-arrow" id="arrowDate">▼</span>
-            </button>
-            <button class="sort-btn" id="sortCompany" onclick="sortBy('company')">
-                Company <span class="sort-arrow" id="arrowCompany">▼</span>
-            </button>
-            <button class="sort-btn" id="sortAccount" onclick="sortBy('account')">
-                Account <span class="sort-arrow" id="arrowAccount">▼</span>
-            </button>
+
+        <!-- Filters Grid -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px;" id="filtersGrid">
+            
+            <div class="filter-group" style="display:flex; flex-direction:column; gap:4px;">
+                <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">From Date</label>
+                <input type="date" id="filterFromDate" onchange="applyFilters()" style="padding:8px 10px; border-radius:6px; border:1px solid var(--border-color); background:rgba(0,0,0,0.2); color:var(--text-primary); font-family:inherit;">
+            </div>
+
+            <div class="filter-group" style="display:flex; flex-direction:column; gap:4px;">
+                <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Company</label>
+                <select id="filterCompany" onchange="applyFilters()" style="padding:8px 10px; border-radius:6px; border:1px solid var(--border-color); background:rgba(0,0,0,0.2); color:var(--text-primary); font-family:inherit;">
+                    <option value="all">All Companies</option>
+                </select>
+            </div>
+
+            <div class="filter-group" style="display:flex; flex-direction:column; gap:4px;">
+                <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Account</label>
+                <select id="filterAccount" onchange="applyFilters()" style="padding:8px 10px; border-radius:6px; border:1px solid var(--border-color); background:rgba(0,0,0,0.2); color:var(--text-primary); font-family:inherit;">
+                    <option value="all">All Accounts</option>
+                </select>
+            </div>
+
+            <div class="filter-group" style="display:flex; flex-direction:column; gap:4px;">
+                <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Currency</label>
+                <select id="filterCurrency" onchange="applyFilters()" style="padding:8px 10px; border-radius:6px; border:1px solid var(--border-color); background:rgba(0,0,0,0.2); color:var(--text-primary); font-family:inherit;">
+                    <option value="all">All Settings</option>
+                    <option value="ils">Local (ILS) Only</option>
+                    <option value="foreign">Foreign Currency Only</option>
+                </select>
+            </div>
+
+            <div class="filter-group" style="display:flex; flex-direction:column; gap:4px;">
+                <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Installments</label>
+                <select id="filterInstallments" onchange="applyFilters()" style="padding:8px 10px; border-radius:6px; border:1px solid var(--border-color); background:rgba(0,0,0,0.2); color:var(--text-primary); font-family:inherit;">
+                    <option value="all">Include everything</option>
+                    <option value="only">Installments Only</option>
+                    <option value="none">Hide Installments</option>
+                </select>
+            </div>
+
         </div>
+
+        <!-- Amount Range Filter -->
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+            <div style="display:flex; justify-content:space-between;">
+                <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Amount Range (ILS)</label>
+                <span id="amountDisplay" style="font-size:0.8rem; color:var(--accent);">0 to 0</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <input type="number" id="amountMinRaw" onchange="syncAmountInputs(true)" style="width:80px; padding:6px; border-radius:4px; border:1px solid var(--border-color); background:rgba(0,0,0,0.2); color:var(--text-primary); font-size:0.8rem;" placeholder="Min">
+                
+                <div style="position:relative; flex-grow:1; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; margin:10px 0;">
+                    <input type="range" id="amountMin" oninput="syncAmountInputs(false)" style="position:absolute; width:100%; top:-8px; pointer-events:none; -webkit-appearance:none; background:transparent;">
+                    <input type="range" id="amountMax" oninput="syncAmountInputs(false)" style="position:absolute; width:100%; top:-8px; pointer-events:none; -webkit-appearance:none; background:transparent;">
+                </div>
+
+                <input type="number" id="amountMaxRaw" onchange="syncAmountInputs(true)" style="width:80px; padding:6px; border-radius:4px; border:1px solid var(--border-color); background:rgba(0,0,0,0.2); color:var(--text-primary); font-size:0.8rem;" placeholder="Max">
+            </div>
+            <style>
+                input[type=range]::-webkit-slider-thumb {
+                    pointer-events:all; width:16px; height:16px; -webkit-appearance:none; border-radius:50%; background:var(--accent); cursor:pointer;
+                }
+            </style>
+        </div>
+
     </div>
 
     <div class="table-container">

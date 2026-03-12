@@ -57,3 +57,18 @@ This file documents all changes made to the application. It is appended to seque
 **Where in code:**
 - `public/results.html` (Added `#sortAccount` button and updated `thead` CSS).
 - `public/results.js` (Added `account` case inside `sortBy()` logic).
+
+---
+
+### Advanced Multi-Filter Implementation (2026-03-12)
+**What was done:**
+- Converted the simple date filter on the results page into a robust multi-filter panel.
+- Added dynamic dropdowns for filtering by **Company** and **Account**. These dropdowns auto-populate based on the scraped transactions data.
+- Added a dropdown to filter by **Currency** (All, Local ILS Only, Foreign Currency Only).
+- Added a dropdown to filter by **Installments** (Include Everything, Installments Only, Hide Installments).
+- Added a dual-thumb slider and raw number inputs to filter the absolute value of the **Amount**.
+- Extensively updated the JavaScript (`applyFilters`) to handle evaluating all of these filters simultaneously and redrawing the table in real-time.
+
+**Where in code:**
+- `public/results.html` (Complete rewrite of `.results-controls` to include the new grid layout of select fields and sliders).
+- `public/results.js` (Replaced `applyDateFilter` with unified `applyFilters`, added `populateDropdowns` and `syncAmountInputs` logic).

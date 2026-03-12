@@ -99,7 +99,10 @@ async function loadCompanies() {
             <div class="name">${c.name}</div>
             <div class="date">Added ${date}</div>
         </div>
-        <button class="btn-remove" onclick="removeCompany('${id}')" title="Remove">✕</button>`;
+        <div style="display:flex; gap:6px; align-items:center;">
+            <button disabled title="Settings (coming soon)" style="background:none; border:1px solid var(--border-color); color:var(--text-muted); font-size:0.75rem; padding:3px 8px; border-radius:4px; cursor:not-allowed; opacity:0.5;">⚙ Settings</button>
+            <button class="btn-remove" onclick="removeCompany('${id}')" title="Remove">✕</button>
+        </div>`;
         fragment.appendChild(li);
     };
 
@@ -198,7 +201,7 @@ document.getElementById('addCompanyForm').addEventListener('submit', async (e) =
             await loadCompanies();
             setTimeout(closeAddModal, 800);
         } else {
-            setAddStatus('error', data.error);
+            setAddStatus('error', data.error || 'Failed to save company');
         }
     } catch (err) {
         setAddStatus('error', err.message);
@@ -244,6 +247,9 @@ async function scrapeAll() {
 
         // Show per-company summary
         const summaryEl = document.getElementById('scrapeSummary');
+        const totalCompanies = data.summary.length;
+        const failedCompanies = data.summary.filter(s => s.status === 'error');
+
         summaryEl.innerHTML = data.summary.map(s => {
             if (s.status === 'success') {
                 return `<div class="summary-item success">
@@ -251,12 +257,21 @@ async function scrapeAll() {
                     <span>${s.count} transactions</span>
                 </div>`;
             } else {
+                const stopMsg = totalCompanies === 1 ? '<br><small>⚠️ Process stopped — this was the only company registered.</small>' : '';
                 return `<div class="summary-item error">
-                    <span class="label">❌ ${s.name}</span>
-                    <span>${s.error}</span>
+                    <div style="width:100%">
+                        <div style="display:flex; justify-content:space-between;">
+                            <span class="label">❌ ${s.name}</span>
+                        </div>
+                        <div style="font-size:0.8rem; margin-top:4px; color:#fca5a5; word-break:break-word;">${s.error || 'Unknown error'}${stopMsg}</div>
+                    </div>
                 </div>`;
             }
         }).join('');
+
+        if (failedCompanies.length > 0 && failedCompanies.length < totalCompanies) {
+            setScrapeStatus('loading', `Scraping finished — ${failedCompanies.length} company error(s), see details above`);
+        }
 
         if (data.transactions.length > 0) {
             setScrapeStatus('success', `Found ${data.transactions.length} total transactions`);

@@ -200,6 +200,13 @@ app.post('/api/companies/add', requireAuth, (req, res) => {
     const user = data.users[req.session.username];
     if (!user) return res.status(404).json({ error: 'User not found' });
 
+    // Block duplicate registration
+    if (user.companies[companyId]) {
+        return res.status(409).json({
+            error: `${SCRAPERS[companyId].name} is already registered. Remove it first if you want to update the credentials.`
+        });
+    }
+
     // Encrypt credentials with user's password
     const encrypted = encryptCredentials(credentials, req.session.userPassword);
     user.companies[companyId] = {

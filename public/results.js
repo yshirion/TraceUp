@@ -69,7 +69,7 @@ function sortBy(field, keepDirection = false) {
         sortAsc = !sortAsc;
     } else if (!keepDirection) {
         currentSort = field;
-        sortAsc = field === 'company';
+        sortAsc = field === 'company' || field === 'account';
     }
 
     // Update button styling
@@ -79,6 +79,7 @@ function sortBy(field, keepDirection = false) {
     // Update arrows
     document.getElementById('arrowDate').textContent = currentSort === 'date' ? (sortAsc ? '▲' : '▼') : '▼';
     document.getElementById('arrowCompany').textContent = currentSort === 'company' ? (sortAsc ? '▲' : '▼') : '▼';
+    document.getElementById('arrowAccount').textContent = currentSort === 'account' ? (sortAsc ? '▲' : '▼') : '▼';
 
     const sorted = [...visibleTransactions].sort((a, b) => {
         let cmp = 0;
@@ -87,6 +88,13 @@ function sortBy(field, keepDirection = false) {
         } else if (field === 'company') {
             cmp = a.company.localeCompare(b.company);
             if (cmp === 0) cmp = parseDate(a.date) - parseDate(b.date); // Fallback date sort
+        } else if (field === 'account') {
+            // Sort by company first to group accounts correctly
+            cmp = a.company.localeCompare(b.company);
+            // If same company, sort by account
+            if (cmp === 0) cmp = a.account.localeCompare(b.account);
+            // If same account, fallback to date
+            if (cmp === 0) cmp = parseDate(a.date) - parseDate(b.date);
         }
         return sortAsc ? cmp : -cmp;
     });

@@ -45,3 +45,15 @@ This file documents all changes made to the application. It is appended to seque
 - `public/login.html` & `public/login.js`
 - `public/index.html` & `public/index.js`
 - `public/results.html` & `public/results.js`
+
+---
+
+### Account Sorting and Table UI Enhancements (2026-03-12)
+**What was done:**
+- Added an "Account" sort button to the results page.
+- Implemented sorting logic for Account to always group by Company first. If comparing two transactions from the same company, they will sort by Account, and further fallback to sorting by Date.
+- Updated the transactions table header (`thead`) to have an opaque background and slight drop-shadow, preventing data rows from confusingly showing through the header when scrolling down.
+
+**Where in code:**
+- `public/results.html` (Added `#sortAccount` button and updated `thead` CSS).
+- `public/results.js` (Added `account` case inside `sortBy()` logic).

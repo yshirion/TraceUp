@@ -51,12 +51,14 @@ function init() {
 function populateDropdowns() {
     const companies = new Set();
     const accounts = new Set();
+    const categories = new Set();
     
     let absMaxAmount = 0;
 
     allTransactions.forEach(t => {
         companies.add(t.company);
         accounts.add(t.account);
+        if (t.category) categories.add(t.category);
         const absVal = Math.abs(t.chargedAmount);
         if (absVal > absMaxAmount) absMaxAmount = absVal;
     });
@@ -98,6 +100,11 @@ function populateDropdowns() {
     const accountSel = document.getElementById('filterAccount');
     Array.from(accounts).sort().forEach(a => {
         accountSel.innerHTML += `<option value="${a}">${a}</option>`;
+    });
+
+    const categorySel = document.getElementById('filterCategory');
+    Array.from(categories).sort().forEach(c => {
+        categorySel.innerHTML += `<option value="${c}">${c}</option>`;
     });
 
     // Setup amount sliders
@@ -161,6 +168,7 @@ function resetFilters() {
     // Re-check all company checkboxes
     document.querySelectorAll('#filterCompanyList input[type=checkbox]').forEach(b => b.checked = true);
     document.getElementById('filterAccount').value = 'all';
+    document.getElementById('filterCategory').value = 'all';
     document.getElementById('filterCurrency').value = 'all';
     document.getElementById('filterInstallments').value = 'all';
     
@@ -179,6 +187,7 @@ function applyFilters() {
         ? null // all selected — no filtering needed
         : new Set(Array.from(checkedBoxes).map(b => b.value));
     const account = document.getElementById('filterAccount').value;
+    const category = document.getElementById('filterCategory').value;
     const currency = document.getElementById('filterCurrency').value;
     const installments = document.getElementById('filterInstallments').value;
     
@@ -209,6 +218,9 @@ function applyFilters() {
 
         // 4. Account filter
         if (account !== 'all' && t.account !== account) return false;
+
+        // 5. Category filter
+        if (category !== 'all' && t.category !== category) return false;
 
         // 4. Currency filter
         let isForeign = t.isNonILS;

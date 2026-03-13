@@ -277,6 +277,13 @@
             </div>
 
             <div class="filter-group" style="display:flex; flex-direction:column; gap:4px;">
+                <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Category</label>
+                <select id="filterCategory" onchange="applyFilters()" style="padding:8px 10px; border-radius:6px; border:1px solid var(--border-color); background:rgba(0,0,0,0.2); color:var(--text-primary); font-family:inherit;">
+                    <option value="all">All Categories</option>
+                </select>
+            </div>
+
+            <div class="filter-group" style="display:flex; flex-direction:column; gap:4px;">
                 <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Account</label>
                 <select id="filterAccount" onchange="applyFilters()" style="padding:8px 10px; border-radius:6px; border:1px solid var(--border-color); background:rgba(0,0,0,0.2); color:var(--text-primary); font-family:inherit;">
                     <option value="all">All Accounts</option>
